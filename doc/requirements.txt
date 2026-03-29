@@ -1,4 +1,5 @@
 sphinx-design
 sphinx-prompt
 sphinx-gallery
+numpydoc
 -e .
