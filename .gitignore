@@ -6,21 +6,16 @@ __pycache__/
 # C extensions
 *.so
 
-# JP no examples until created for skedm
-examples/
-
-# JP For now no docs until updated
-doc/
 # Sphinx documentation
-#doc/_build/
-#doc/generated/
-#doc/sg_execution_times.rst
+doc/_build/
+doc/generated/
+doc/sg_execution_times.rst
 
 # scikit-learn specific
-#doc/_build/
-#doc/auto_examples/
-#doc/modules/generated/
-#doc/datasets/generated/
+doc/_build/
+doc/auto_examples/
+doc/modules/generated/
+doc/datasets/generated/
 
 # Distribution / packaging
 .Python
