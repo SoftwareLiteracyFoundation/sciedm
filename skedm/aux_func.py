@@ -6,6 +6,9 @@ IsIterable      Is an object iterable and not a string?
 SurrogateData   ebisuzaki, random shuffle, seasonal
 PlotObsPred     Plot observations & predictions
 PlotCoef        Plot s-map coefficients
+PlotCCM
+PlotEmbedDimension    Plot E,rho from EmbedDimension
+PlotPredictNonlinear  Plot theta,rho from PredictNonlinear
 """
 
 # python modules
@@ -18,7 +21,7 @@ from numpy import absolute, any, arange, corrcoef, fft, isfinite
 from numpy import mean, max, nan, ptp, std, sqrt, zeros
 from pandas import DataFrame
 from scipy.interpolate import UnivariateSpline
-from matplotlib.pyplot import show
+from matplotlib.pyplot import show, axhline
 
 
 def ComputeError(obs, pred, digits=6):
@@ -85,7 +88,9 @@ def SurrogateData(
     smooth=0.8,
     outputFile=None,
 ):
-    """Three methods:
+    """Generate surrogate data
+
+    Three methods:
 
     random_shuffle :
       Sample the data with a uniform distribution.
@@ -198,41 +203,87 @@ def SurrogateData(
     return df
 
 
-def PlotObsPred(df, dataName="", E=0, Tp=0, block=True):
-    """Plot observations and predictions"""
+def PlotObsPred(df, title=None, ax=None):
+    """Plot observations and predictions with default ρ, RMSE
 
-    # stats: {'MAE': 0., 'RMSE': 0., 'rho': 0. }
-    stats = ComputeError(df["Observations"], df["Predictions"])
-
-    title = (
-        dataName
-        + "\nE="
-        + str(E)
-        + " Tp="
-        + str(Tp)
-        + "  ρ="
-        + str(round(stats["rho"], 3))
-        + " RMSE="
-        + str(round(stats["RMSE"], 3))
-    )
+       If block=True show the plot and block for user to close
+       Return pyplot axis of plot"""
+    if title is None:
+        stats = ComputeError(df["Observations"], df["Predictions"])
+        title = f"ρ={round(stats['rho'], 3)}  RMSE={round(stats['RMSE'], 3)}"
 
     time_col = df.columns[0]
+    ax_ = df.plot(time_col, ["Observations", "Predictions"], title=title,
+                  ax=ax, linewidth=3)
+    
+    if ax is None:
+        show()
 
-    df.plot(time_col, ["Observations", "Predictions"], title=title, linewidth=3)
-
-    show(block=block)
+    return ax_
 
 
-def PlotCoeff(df, dataName="", E=0, Tp=0, block=True):
-    """Plot S-Map coefficients"""
+def PlotCoeff(df, title=None, ax=None):
+    """Plot S-Map coefficients
 
-    title = dataName + "\nE=" + str(E) + " Tp=" + str(Tp) + "  S-Map Coefficients"
-
+       If ax is None call plt.show to display
+       Return pyplot axis of plot"""
     time_col = df.columns[0]
-
     # Coefficient columns can be in any column
     coef_cols = [x for x in df.columns if time_col not in x]
+    ax_ = df.plot(time_col, coef_cols, title=title, linewidth=3, ax=ax, subplots=True)
 
-    df.plot(time_col, coef_cols, title=title, linewidth=3, subplots=True)
+    if ax is None:
+        show()
 
-    show(block=block)
+    return ax_
+
+
+def PlotCCM(df, title=None, ax=None):
+    """Plot CCM
+
+       If ax is None call plt.show to display
+       Return pyplot axis of plot"""
+    if df.shape[1] == 3 :
+        # CCM of two different variables
+        ax_ = df.plot(
+            'LibSize', [df.columns[1], df.columns[2]], title=title, linewidth=3, ax=ax
+        )
+    elif df.shape[1] == 2 :
+        # CCM of degenerate columns : target
+        ax_ = df.plot('LibSize', df.columns[1], title=title, linewidth=3, ax=ax)
+
+    ax_.set( xlabel = "Library Size", ylabel = "CCM ρ" )
+    axhline(y=0, linewidth=1)
+
+    if ax is None:
+        show()
+
+    return ax_
+
+
+def PlotEmbedDimension(df, title=None, ax=None):
+    """Plot embedding dimension
+
+       If ax is None call plt.show to display
+       Return pyplot axis of plot"""
+    ax_ = df.plot( 'E', 'rho', title=title, linewidth=3, ax=ax )
+    ax_.set(xlabel = "Embedding Dimension", ylabel = "Prediction Skill ρ")
+
+    if ax is None:
+        show()
+
+    return ax_
+
+
+def PlotPredictNonlinear(df, title=None, ax=None):
+    """Plot S-map Localisation (θ)
+
+       If ax is None call plt.show to display
+       Return pyplot axis of plot"""
+    ax_ = df.plot( 'theta', 'rho', title=title, linewidth=3, ax=ax )
+    ax_.set(xlabel = "S-map Localisation (θ)", ylabel = "Prediction Skill ρ")
+    
+    if ax is None:
+        show()
+
+    return ax_

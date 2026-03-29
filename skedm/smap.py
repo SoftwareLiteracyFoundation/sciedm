@@ -14,18 +14,17 @@ from sklearn.utils.validation import check_is_fitted, validate_data
 from sklearn.utils import Tags, InputTags, TargetTags, RegressorTags
 
 from numpy import apply_along_axis, insert, isnan, isfinite, exp, ndarray
-from numpy import full, integer, linspace, mean, nan, power, sum
+from numpy import array, full, integer, linspace, mean, nan, power, sum
 from numpy.linalg import lstsq  # from scipy.linalg import lstsq
-from scipy.sparse import issparse
 from pandas import DataFrame, Series, concat
 
 from .embed import Embed
-
+from .aux_func import ComputeError
 
 class SMap(RegressorMixin, BaseEstimator):
     """S-map projection of target variable from embedding library
 
-    S-map ().
+    Sequential locally weighted global linear maps (s-map).
 
     Parameters
     ----------
@@ -136,7 +135,6 @@ class SMap(RegressorMixin, BaseEstimator):
 
     See Also
     --------
-    https://en.wikipedia.org/wiki/Empirical_dynamic_modeling#S-Map
 
     Reference
     ---------
@@ -183,21 +181,13 @@ class SMap(RegressorMixin, BaseEstimator):
         self.embedded = embedded
         self.noTime = noTime
 
+    # -------------------------------------------------------------------
     # Class Methods
     from .edm_indices import CreateIndices
     from .neighbors import FindNeighbors
     from .formatting import FormatProjection, ConvertTime, AddTime
     from .validate import Validate, PredictionValid, RemoveNan, Validate_Xy
     from .edm_params import EDM_params
-
-    def EmbedData(self):
-        """Embed data : If not embedded call Embed()"""
-        if not self.embedded:
-            self.Embedding_ = Embed(
-                dataFrame=self._Data, E=self._E, tau=self.tau, columns=self._columns
-            )
-        else:
-            self.Embedding_ = self._Data[self.columns]  # Already an embedding
 
     def __sklearn_tags__(self):
         return Tags(
@@ -208,10 +198,24 @@ class SMap(RegressorMixin, BaseEstimator):
         )
 
     def get_feature_names_out(self, input_features=None):
-        """set_output for downstream pipeline compatibility
-        This function is a method of class ColumnTransformer"""
+        """Set_output for downstream pipeline compatibility
+        See https://scikit-learn.org/stable/developers/develop.html#
+                    developer-api-for-set-output
+        To usefully label cross mapped components, use both _columns and
+        _target attributes in the generated name. 
+        """
         check_is_fitted(self)
-        return np.array([self._target + "_pred"], dtype=object)
+        return array([f"{self._columns}:{self._target}"], dtype=object)
+
+    # -------------------------------------------------------------------
+    def EmbedData(self):
+        """Embed data : If not embedded call Embed()"""
+        if self._embedded:
+            self.Embedding_ = self._Data[self._columns]  # Already an embedding
+        else:
+            self.Embedding_ = Embed(
+                dataFrame=self._Data, E=self._E, tau=self.tau, columns=self._columns
+            )
 
     # -------------------------------------------------------------------
     @_fit_context(prefer_skip_nested_validation=True)
@@ -242,22 +246,23 @@ class SMap(RegressorMixin, BaseEstimator):
         self._pred = copy(self.pred)
         self._E = copy(self.E)
         self._knn = copy(self.knn)
+        self._embedded = copy(self.embedded)
         self._noTime = copy(self.noTime)
         self._name = "SMap"
 
-        self._validate_params()  # Additional validation in self.Validate()
-        self.Validate_Xy(X, y)
-
+        # Declare / instantiate class objects for understandability
+        # Externally presented attributes
         self.Embedding_ = None  # DataFrame, includes nan
         self.Projection_ = None  # DataFrame Simplex & SMap output
         self.Coefficients_ = None  # DataFrame SMap coefficients
         self.SingularValues_ = None  # DataFrame SMap
-
         self.lib_i_ = None  # ndarray library indices
         self.pred_i_ = None  # ndarray prediction indices : nan removed
         self.knn_neighbors_ = None  # ndarray (N_pred, knn) sorted
         self.knn_distances_ = None  # ndarray (N_pred, knn) sorted
 
+        # Internally utilized
+        self._Data = None  # DataFrame from user in X
         self._pred_i_all = None  # ndarray prediction indices : nan included
         self._predList = []  # list of disjoint pred_i_all
         self._validLib = []  # list of valid lib indices
@@ -275,10 +280,13 @@ class SMap(RegressorMixin, BaseEstimator):
         self._targetVecNan = False  # True if targetVec has nan : SMap only
         self._time = None  # ndarray entire record numerically operable
 
-        if y is None:  # In application y=None, in check_estimator() skip Validate()
-            self.Validate()  # EDM method: set knn, E, Data(Frame) if needed
+        # Parameter & data validation
+        self._validate_params()
+        self.Validate_Xy(X, y)  # Assign self._Data from X, _target
+        self.Validate()  # EDM method: set knn, E, Data(Frame) if needed
         self.EDM_params()  # Set default EDM params, add time if noTime=True
-        self.CreateIndices()  # Generate lib_i & pred_i, validLib : EDM Method
+
+        self.CreateIndices()  # Generate lib_i & pred_i, validLib
         self.EmbedData()
         self.RemoveNan()
         self.FindNeighbors()
@@ -311,7 +319,7 @@ class SMap(RegressorMixin, BaseEstimator):
         # target parameter might have changed for new prediction
         __target = self.get_params()["target"]
         if __target is None:
-            __target = "y"  # Terrible. How do we fix this?
+            __target = "y"  # To handle check_estimator(). Terrible. How do we fix this?
         self._targetVec = self._Data[__target]
 
         # If targetVec has nan, set flag for SMap internals
@@ -513,6 +521,12 @@ class SMap(RegressorMixin, BaseEstimator):
         _ = self.fit(_X, _y)  # Depends on columns, lib, pred, E, Tp, tau
         y_pred = self.predict(_X)  # Depends on target
 
-        return r2_score(
-            y[self.pred_i_], y_pred, sample_weight=sample_weight  # Limit to pred
-        )
+        # If nan use ComputeError
+        if any(isnan(y_pred)) or any(isnan(y[self.pred_i_])):
+            score = ComputeError(y[self.pred_i_], y_pred)['rho']
+        else:
+            score = r2_score(
+                y[self.pred_i_], y_pred, sample_weight=sample_weight  # Limit to pred
+            )
+
+        return score

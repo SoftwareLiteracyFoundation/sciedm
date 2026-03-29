@@ -18,12 +18,11 @@ from warnings import warn
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.utils.validation import check_is_fitted, validate_data
 from sklearn.utils import Tags, InputTags, TargetTags, RegressorTags
-from numpy import array, divide, exp, isnan, fmax, ndarray, power, subtract, sum, zeros
-from numpy import isinf, isnan, ndarray
-from scipy.sparse import issparse
+from numpy import array, divide, exp, fmax, isnan, ndarray, power, subtract, sum, zeros
 from pandas import DataFrame
 
 from .embed import Embed
+from .aux_func import ComputeError
 
 
 class Simplex(RegressorMixin, BaseEstimator):
@@ -134,7 +133,6 @@ class Simplex(RegressorMixin, BaseEstimator):
 
     See Also
     --------
-    https://en.wikipedia.org/wiki/Empirical_dynamic_modeling#Simplex
 
     Reference
     ---------
@@ -182,15 +180,6 @@ class Simplex(RegressorMixin, BaseEstimator):
     from .validate import Validate, PredictionValid, RemoveNan, Validate_Xy
     from .edm_params import EDM_params
 
-    def EmbedData(self):
-        """Embed data : If not embedded call Embed()"""
-        if not self.embedded:
-            self.Embedding_ = Embed(
-                dataFrame=self._Data, E=self._E, tau=self.tau, columns=self._columns
-            )
-        else:
-            self.Embedding_ = self._Data[self.columns]  # Already an embedding
-
     def __sklearn_tags__(self):
         return Tags(
             estimator_type="regressor",
@@ -200,11 +189,25 @@ class Simplex(RegressorMixin, BaseEstimator):
         )
 
     def get_feature_names_out(self, input_features=None):
-        """set_output for downstream pipeline compatibility
-        This function is a method of class ColumnTransformer"""
-        check_is_fitted(self)
-        return np.array([self._target + "_pred"], dtype=object)
+        """Set_output for downstream pipeline compatibility
 
+        To usefully label cross mapped components, use both _columns and
+        _target attributes in the generated name. 
+        """
+        check_is_fitted(self)
+        return array([f"{self._columns}:{self._target}"], dtype=object)
+
+    # -------------------------------------------------------------------
+    def EmbedData(self):
+        """Embed data : If not embedded call Embed()"""
+        if self._embedded:
+            self.Embedding_ = self._Data[self._columns]  # Already an embedding
+        else:
+            self.Embedding_ = Embed(
+                dataFrame=self._Data, E=self._E, tau=self.tau, columns=self._columns
+            )
+
+    # -------------------------------------------------------------------
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Initialize lib & pred indices, embed data, find neighbors
@@ -233,12 +236,11 @@ class Simplex(RegressorMixin, BaseEstimator):
         self._pred = copy(self.pred)
         self._E = copy(self.E)
         self._knn = copy(self.knn)
+        self._embedded = copy(self.embedded)
         self._noTime = copy(self.noTime)
-        self._name = "Simplex"
 
-        self._validate_params()  # Additional parameter validation in self.Validate()
-        self.Validate_Xy(X, y)
-
+        # Declare / instantiate class objects for understandability
+        # Externally presented attributes
         self.Embedding_ = None  # DataFrame, includes nan
         self.Projection_ = None  # DataFrame Simplex output
         self.lib_i_ = None  # ndarray library indices
@@ -246,6 +248,9 @@ class Simplex(RegressorMixin, BaseEstimator):
         self.knn_neighbors_ = None  # ndarray (N_pred, knn) sorted
         self.knn_distances_ = None  # ndarray (N_pred, knn) sorted
 
+        # Internally utilized
+        self._name = "Simplex"
+        self._Data = None  # DataFrame from user in X
         self._pred_i_all = None  # ndarray prediction indices : nan included
         self._predList = []  # list of disjoint pred_i_all
         self._validLib = []  # list of valid lib indices
@@ -260,10 +265,13 @@ class Simplex(RegressorMixin, BaseEstimator):
         self._targetVec = None  # ndarray entire record
         self._time = None  # ndarray entire record numerically operable
 
-        if y is None:  # In application y=None, in check_estimator() skip Validate()
-            self.Validate()  # EDM method: set knn, E, Data(Frame) if needed
+        # Parameter & data validation
+        self._validate_params()
+        self.Validate_Xy(X, y)  # Assign self._Data from X, _target
+        self.Validate()  # set knn, E, Data(Frame) if needed
         self.EDM_params()  # Set default EDM params, add time if noTime=True
-        self.CreateIndices()  # Generate lib_i & pred_i, validLib : EDM Method
+
+        self.CreateIndices()  # Generate lib_i & pred_i, validLib
         self.EmbedData()
         self.RemoveNan()
         self.FindNeighbors()
@@ -296,8 +304,8 @@ class Simplex(RegressorMixin, BaseEstimator):
         # target parameter might have changed for new prediction
         __target = self.get_params()["target"]
         if __target is None:
-            __target = "y"  # Terrible. How do we fix this?
-        self._targetVec = self._Data[__target]
+            __target = "y"  # To handle check_estimator. Terrible. How do we fix this?
+        self._targetVec = self._Data[__target].to_numpy()
 
         self.Project()
         self.FormatProjection()
@@ -322,14 +330,7 @@ class Simplex(RegressorMixin, BaseEstimator):
 
         # Matrix of knn_neighbors + Tp defines library target values
         knn_neighbors_Tp = self.knn_neighbors_ + self.Tp  # N x k
-        libTargetValues = zeros(knn_neighbors_Tp.shape)  # N x k
-
-        # for j in range( knn_neighbors_Tp.shape[1] ) : # for each column j of k
-        #    libTargetValues[ :, j ][ :, None ] = \
-        #        self._targetVec[ knn_neighbors_Tp[ :, j ] ]
-
-        for j in range(knn_neighbors_Tp.shape[1]):  # for each column j of k
-            libTargetValues[:, j] = self._targetVec[knn_neighbors_Tp[:, j]]
+        libTargetValues  = self._targetVec[knn_neighbors_Tp]
 
         # Projection is average of weighted knn library target values
         self._projection = sum(weights * libTargetValues, axis=1) / weightRowSum
@@ -391,6 +392,12 @@ class Simplex(RegressorMixin, BaseEstimator):
         _ = self.fit(_X, _y)  # Depends on columns, lib, pred, E, Tp, tau
         y_pred = self.predict(_X)  # Depends on target
 
-        return r2_score(
-            y[self.pred_i_], y_pred, sample_weight=sample_weight  # Limit to pred
-        )
+        # If nan use ComputeError
+        if any(isnan(y_pred)) or any(isnan(y[self.pred_i_])):
+            score = ComputeError(y[self.pred_i_], y_pred)['rho']
+        else:
+            score = r2_score(
+                y[self.pred_i_], y_pred, sample_weight=sample_weight  # Limit to pred
+            )
+
+        return score

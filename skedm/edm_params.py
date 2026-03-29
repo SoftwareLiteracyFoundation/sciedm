@@ -1,3 +1,5 @@
+from numpy import array
+
 from .aux_func import IsIterable
 
 
@@ -7,19 +9,20 @@ def EDM_params(self):
 
     # If noTime is True create time index in first column
     if self._noTime:
-        self._time = array([i for i in range(1,self._Data.shape[1]+1)], dtype=int)
+        self._time = array([i for i in range(1, self._Data.shape[0] + 1)], dtype=int)
         self._Data.insert(0, "time", self._time)
     else:
-        self._time = self._Data.iloc[:,0] # First column is time
+        self._time = self._Data.iloc[:, 0]  # First column is time
 
-    if not self.embedded:
-        if self.tau == 0:
-            raise RuntimeError(f"Validate() {self._name}:" + " tau must be non-zero.")
+    if self._embedded:
+        self._E = len(self._columns)  # embedded = True: Set E to number of columns
+    else:
+        if self.tau == 0:  # time-delay embedding
+            raise RuntimeError(f"EDM_params() {self._name}:" + " tau must be non-zero.")
         if self._E < 1:
             raise RuntimeError(
                 f"EDM_params() {self._name}:"
-                + f" E = {self._E} is invalid "
-                + "if embedded = False"
+                + f" E = {self._E} is invalid if embedded = False"
             )
 
     # if lib or pred are not provided default to all observations
@@ -37,10 +40,6 @@ def EDM_params(self):
 
     # Set knn default based on E and lib size, E embedded on num columns
     if self._name in ["Simplex", "CCM", "Multiview"]:
-        # embedded = true: Set E to number of columns
-        if self.embedded:
-            self._E = len(self._columns)
-
         # knn not specified : knn set to E+1
         if self._knn < 1:
             self._knn = self._E + 1
@@ -50,11 +49,7 @@ def EDM_params(self):
             #    print(msg, flush=True)
 
     if self._name == "SMap":
-        # embedded = true: Set E to number of columns
-        if self.embedded and len(self._columns):
-            self._E = len(self._columns)
-
-        if not self.embedded and len(self._columns) > 1:
+        if not self._embedded and len(self._columns) > 1:
             msg = (
                 f"{self._name} EDM_params(): Multivariable S-Map "
                 + "must use embedded = True to ensure data/dimension "

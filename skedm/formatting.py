@@ -8,6 +8,7 @@ from numpy import append, array, empty, floating, full, integer, nan
 
 from .aux_func import IsIterable
 
+
 # --------------------------------------------------------------------
 # EDM Methods
 # -------------------------------------------------------------------
@@ -82,7 +83,7 @@ def FormatProjection(self):
 
         obs_i = append(obs_i, append_i)
 
-    observations = self._targetVec.iloc[obs_i]
+    observations = self._targetVec[obs_i]
 
     # ----------------------------------------------------
     # Projections & variance

@@ -32,8 +32,8 @@ def Embed(
     if not isinstance(dataFrame, DataFrame):
         raise RuntimeError("Embed(): dataFrame is not a Pandas DataFrame.")
 
-    # if not IsIterable(columns):
-    #    columns = columns.split()  # Convert string to []
+    if not IsIterable(columns):  # enforce columns to be iterable not just string
+        columns = [columns]
 
     for column in columns:
         if column not in dataFrame.columns:

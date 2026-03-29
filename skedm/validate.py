@@ -3,12 +3,42 @@ from copy import copy
 from datetime import datetime
 
 from sklearn.utils.validation import validate_data
+from scipy.sparse import issparse
 from pandas import DataFrame, Series
-from numpy import any, array, isnan, ndarray
+from numpy import any, array, isinf, isnan, ndarray
 
 from .aux_func import IsIterable
 
-# EDM method
+
+# skedm.simplex .smap method
+def Validate(self):
+    """Validate DataFrame columns/target in .fit()"""
+
+    # Ensure columns are provided, convert to iterable if bare string
+    if self._columns is None:
+        raise RuntimeError(f"Validate() {self._name}: columns required")
+
+    if not IsIterable(self._columns):
+        self._columns = [self._columns]
+
+    for column in self._columns:
+        if column not in self._Data.columns:
+            raise RuntimeError(
+                f"Validate() {self._name}: column "
+                + f"{column} not found in dataFrame."
+            )
+
+    if self._target is None:
+        raise RuntimeError(f"Validate() {self._name}: target required")
+
+    if self._target not in self._Data.columns:
+        raise RuntimeError(
+            f"Validate() {self._name}: target "
+            + f"{self._target} not found in dataFrame."
+        )
+
+
+# skedm.simplex .smap method
 def Validate_Xy(self, X, y):
     # validate_data() validates input data and sets or checks feature
     # names and counts of the input. This mutates the estimator setting
@@ -57,6 +87,14 @@ def Validate_Xy(self, X, y):
             if isinstance(_y, list):
                 _y = array(_y)
 
+        if self._name == "SMap":
+            self._embedded = True
+            warn(
+                f"{self._name} received multivariate ndarray. Setting embedded=True",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # Create columns names for X as ['x1','x2',..]
         if _X.ndim == 1:
             num_cols = _X.shape[0]
@@ -75,8 +113,7 @@ def Validate_Xy(self, X, y):
 
     else:
         msg = (
-            f"{self._name} requires DataFrame or ndarray; "
-            + f"got {type(X).__name__}"
+            f"{self._name} requires DataFrame or ndarray; " + f"got {type(X).__name__}"
         )
         raise ValueError(msg)
 
@@ -100,7 +137,7 @@ def Validate_Xy(self, X, y):
         raise ValueError(msg)
 
 
-# EDM method
+# skedm.simplex .smap method
 def RemoveNan(self):
     """KDTree in Neighbors does not accept nan
     If ignoreNan remove Embedding rows with nan from lib_i, pred_i"""
@@ -112,7 +149,7 @@ def RemoveNan(self):
 
         if na_lib.any():
             if self._name == "SMap":
-                original_knn = self.knn
+                original_knn = self._knn
                 original_lib_i_len = len(self.lib_i_)
 
             # Redefine lib_i excluding nan
@@ -121,7 +158,7 @@ def RemoveNan(self):
             # lib_i resized, update SMap self.knn if not user provided
             if self._name == "SMap":
                 if original_knn == original_lib_i_len - 1:
-                    self.knn = len(self.lib_i_) - 1
+                    self._knn = len(self.lib_i_) - 1
 
         # Redefine pred_i excluding nan
         if any(na_pred):
@@ -130,7 +167,7 @@ def RemoveNan(self):
     self.PredictionValid()
 
 
-# EDM method
+# skedm.simplex .smap method
 def PredictionValid(self):
     """Validate there are pred_i to make a prediction"""
     if len(self.pred_i_) == 0:
@@ -139,31 +176,3 @@ def PredictionValid(self):
             + "indices. Examine pred, E, tau, Tp parameters and/or nan."
         )
         warn(msg)
-
-
-# EDM method
-def Validate(self):
-    """Validate DataFrame columns/target in .fit()"""
-
-    # Ensure columns are provided, convert to iterable if bare string
-    if self._columns is None:
-        raise RuntimeError(f"Validate() {self._name}: columns required")
-
-    if not IsIterable(self._columns):
-        self._columns = [self._columns]
-
-    for column in self._columns:
-        if column not in self._Data.columns:
-            raise RuntimeError(
-                f"Validate() {self._name}: column "
-                + f"{column} not found in dataFrame."
-            )
-
-    if self._target is None:
-        raise RuntimeError(f"Validate() {self._name}: target required")
-
-    if self._target not in self._Data.columns:
-        raise RuntimeError(
-            f"Validate() {self._name}: target "
-            + f"{self._target} not found in dataFrame."
-        )

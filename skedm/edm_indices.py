@@ -51,14 +51,14 @@ def CreateIndices(self):
         start, stop = libPairs[r]
 
         # Adjust start, stop to enforce disjoint library gaps
-        if not self.embedded:
+        if not self._embedded:
             if self.tau < 0:
                 start = start + embedShift
             else:
                 stop = stop - embedShift
 
         if self.Tp < 0:
-            if not self.embedded:
+            if not self._embedded:
                 start = int(max(start, start + abs(self.Tp)) - 1)
         else:
             if r == len(libPairs) - 1:
@@ -76,7 +76,7 @@ def CreateIndices(self):
 
     # Validate lib_i: E, tau, Tp combination
     if self._name in ["Simplex", "SMap", "CCM", "Multiview"]:
-        if self.embedded:
+        if self._embedded:
             if len(self.lib_i_) < abs(self.Tp):
                 msg = (
                     f"{self._name}: CreateIndices(): embbeded True "
@@ -162,7 +162,7 @@ def CreateIndices(self):
     # NOTE : This does NOT redefine self.pred_i_, only self.predPairs
     #        self.pred_i_ is redefined to remove all nan in RemoveNan()
     #        at the API level.
-    if not self.embedded:
+    if not self._embedded:
         # If [0, 1, ... embedShift] nan (negative tau) or
         # [N - embedShift, ... N-1, N]  (positive tau) nan
         # are in pred_i delete elements
