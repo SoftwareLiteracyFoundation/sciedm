@@ -5,4 +5,4 @@ skedm - scikit-learn compatible Empirical Dynamic Modeling
 
 ### skedm documentation
 
-See the [skedm documenation]((https://SoftwareLiteracyFoundation.github.io/skedm)
+See the [skedm documenation](https://SoftwareLiteracyFoundation.github.io/skedm)
