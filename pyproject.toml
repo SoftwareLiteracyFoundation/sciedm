@@ -11,7 +11,7 @@ authors = [
 maintainers = [
   {name = "Joseph Park", email = "JosephPark@IEEE.org"}
 ]
-description = "Empirical dynamic modeling (EDM) in scikit-learn parlance."
+description = "Empirical dynamic modeling (EDM) scikit-learn module"
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.11"
@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Operating System :: MacOS",
@@ -37,9 +38,10 @@ keywords = ['EDM', 'Empirical Dynamic Modeling', 'nonlinear dynamics',
 
 [project.urls]
 Homepage      = "https://deepeco.ucsd.edu/"
-Documentation = "https://sugiharalab.github.io/EDM_Documentation/"
+Documentation = "https://sciedm.readthedocs.io/en/latest/"
 Repository    = "https://github.com/SoftwareLiteracyFoundation/sciedm"
 Issues        = "https://github.com/SoftwareLiteracyFoundation/sciedm/issues"
 
 [tool.setuptools_scm]
 version_file = "sciedm/_version.py"
+local_scheme = "no-local-version"
