@@ -25,6 +25,7 @@ Transformer
    :template: class.rst
 
    CCM
+   CCM_Matrix
    EmbedDimension
    PredictNonlinear
 
@@ -43,3 +44,4 @@ Utilities
      aux_func.PlotCCM
      aux_func.PlotEmbedDimension
      aux_func.PlotPredictNonlinear
+     ccm_matrix.PlotMatrix

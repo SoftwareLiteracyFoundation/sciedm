@@ -34,6 +34,7 @@ Class                                                       Function
 :class:`Simplex (RegressorMixin, BaseEstimator)`            simplex
 :class:`SMap (RegressorMixin, BaseEstimator)`               s-map
 :class:`CCM (TransformerMixin, BaseEstimator)`              CCM
+:class:`CCM_Matrix (TransformerMixin, BaseEstimator)`       CCM tensor
 :class:`EmbedDimension (TransformerMixin, BaseEstimator)`   embedding dimension
 :class:`PredictNonlinear (TransformerMixin, BaseEstimator)` nonlinear dependence
 =========================================================== ====================
@@ -70,8 +71,8 @@ Predictors
 
 Simplex
 ~~~~~~~
-:class:`Simplex` is a nearest neighbor projection in the embedding from a  `convex simplex`_ query state to a future (or past) state. It is the core of cross mapping, convergent cross mapping, and dimension estimation, inherently provides out of sample (train:test) validation with the `lib` and `pred` parameters, and provides for exclusion of serially correlated states to focus on nonlinear dynamics with a temporal `exclusionRadius` parameter.
-        
+:class:`Simplex` is a nearest neighbor projection in the embedding from a  `convex simplex`_ query state to a future (or past) state. It is the core of cross mapping, convergent cross mapping, and dimension estimation, inherently provides out of sample (train:test) validation with the `lib` and `pred` parameters, automatically excludes state vectors within the temporal prediction horizon and provides a temporal `exclusionRadius` parameter to exclude serially correlated states to focus on nonlinear dynamics.
+
 Here we use `Simplex` to predict variable `V3` from a 4-D multivariate embedding of `[V1,V2,V4,V5]` of the 5-D Lorenz'96 system. To specify a multivariate embedding instead of a time-delay embedding we set `embedded=True` which sets the embedding dimension to `E=4`. The default prediction horizon is `Tp=1` points ahead. ::
 
     >>> from sciedm import Simplex
@@ -151,6 +152,40 @@ Although we know the variables of the Lorenz'96 system are causally related, we 
    CCM between Lorenz'96 V1 and V5.
 
 As expected both mappings V1:V5 (V5 drives V1) and V5:V1 (V1 drives V5) exhibit convergence and high predictability.
+
+
+
+CCM_Matrix
+~~~~~~~~~~
+Given a set of `N` timeseries observations of `M` variables in an `NxM` DataFrame, `CCM_Matrix` computes the `MxMxL` CCM tensor of each variable against all others where `L` is the number of library sizes in `libSizes`.
+
+Here we build a toy Lorenz'96 matrix as a demonstration. ::
+
+   >>> from sciedm import CCM_Matrix, PlotMatrix
+   >>> from pandas import concat, read_csv
+   >>> df_ = read_csv("../sciedm/data/Lorenz5D.csv")
+   >>> df20 = concat([df_.iloc[:,1:],df_.iloc[:,1:],df_.iloc[:,1:],df_.iloc[:,1:]], axis=1)
+   >>> df = concat( [df_, df20.sample(frac=1, axis=1)], axis=1 )
+   >>> df.columns = ['Time'] + [f"V{x}" for x in range(25)]
+   >>> libSizes = [50,100,500,900,1000]
+   >>> cmat = CCM_Matrix(E=5, libSizes=libSizes)
+   >>> tensor,columns = cmat.fit_transform(X=df)
+
+   >>> PlotMatrix(tensor[:,:,2], columns, title="Cross Map L=500 Lorenz'96")
+   >>> PlotMatrix(cmat.slope_, columns, title="Cross Map Slope Lorenz'96")
+   >>> ccm_L500 = tensor[:,:,2] # MxM cross map at L=500
+   >>> ccm_L500[ cmat.slope_ < 0.2 ] = np.nan # Mask library slope < 0.2
+   >>> PlotMatrix(ccm_L500, columns, title="CCM Converged Lorenz'96")
+
+.. CCM_Matrix_Lorenz:
+.. figure:: figures/CCM_Matrix_Lorenz.png
+   :alt: CCM_Matrix Lorenz'96
+   :align: center
+   :scale: 60%
+
+   Cross map matrix of Lorenz'96 5D expanded to 25 variables at library size 500. Slope of cross map vs. library size. CCM matrix (converged cross mapping).
+
+
 
 
 Embedding Dimension

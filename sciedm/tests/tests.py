@@ -2,7 +2,7 @@
 import sys
 import unittest
 from   datetime import datetime
-from   warnings import filterwarnings, catch_warnings
+import warnings # DeprecationWarning: multiprocessing in Python 3.13.
 
 from numpy  import nan, array, array_equal
 from pandas import DataFrame, read_csv
@@ -81,8 +81,8 @@ class test_sciedm( unittest.TestCase ):
         '''Simplex 1'''
         if self.verbose : print ( " --- Simplex 1 ---" )
         df_ = self.Lorenz5D
-        spx = sciedm.Simplex( columns = 'V1', target = 'V5',
-                             lib = [1,300], pred = [301,310], E = 5 )
+        spx = sciedm.Simplex(columns = 'V1', target = 'V5',
+                             lib = [1,300], pred = [301,310], E = 5)
         spx.fit(df_)
         rho = spx.score(df_, df_['V5'])
 
@@ -90,8 +90,8 @@ class test_sciedm( unittest.TestCase ):
         '''Simplex 2'''
         if self.verbose : print ( "--- Simplex 2 ---" )
         df_ = self.Lorenz5D
-        spx = sciedm.Simplex( columns = ['V1'], target = 'V5',
-                             lib = [1, 300], pred = [301, 310], E = 5 )
+        spx = sciedm.Simplex(columns = ['V1'], target = 'V5',
+                             lib = [1, 300], pred = [301, 310], E = 5)
         spx.fit(df_)
         rho = spx.score(df_, df_['V5'])
 
@@ -99,8 +99,8 @@ class test_sciedm( unittest.TestCase ):
         '''Simplex 3'''
         if self.verbose : print ( "--- Simplex 3 ---" )
         df_ = self.Lorenz5D
-        spx = sciedm.Simplex( columns = ['V1','V3'], target = 'V5',
-                             lib = [1, 300], pred = [301, 310], E = 5 )
+        spx = sciedm.Simplex(columns = ['V1','V3'], target = 'V5',
+                             lib = [1, 300], pred = [301, 310], E = 5)
         spx.fit(df_)
         rho = spx.score(df_, df_['V5'])
 
@@ -108,8 +108,8 @@ class test_sciedm( unittest.TestCase ):
         '''Simplex 5'''
         if self.verbose : print ( "--- Simplex 4 ---" )
         df_ = self.Lorenz5D
-        spx = sciedm.Simplex( columns = 'V1', target = 'V5',
-                             lib = [1, 300], pred = [301, 310], E = 5, knn = 0 )
+        spx = sciedm.Simplex(columns = 'V1', target = 'V5',
+                             lib = [1, 300], pred = [301, 310], E = 5, knn = 0)
         spx.fit(df_)
         rho = spx.score(df_, df_['V5'])
 
@@ -117,8 +117,8 @@ class test_sciedm( unittest.TestCase ):
         '''Simplex 6'''
         if self.verbose : print ( "--- Simplex 5 ---" )
         df_ = self.Lorenz5D
-        spx = sciedm.Simplex( columns = 'V1', target = 'V5',
-                             lib = [1, 300], pred = [301, 310], E = 5, tau = -2 )
+        spx = sciedm.Simplex(columns = 'V1', target = 'V5',
+                             lib = [1, 300], pred = [301, 310], E = 5, tau = -2)
         spx.fit(df_)
         rho = spx.score(df_, df_['V5'])
 
@@ -127,13 +127,14 @@ class test_sciedm( unittest.TestCase ):
         if self.verbose : print ( "--- Simplex 6 embedded = False ---" )
         df_ = self.block3sp
         spx = sciedm.Simplex(columns = "x_t", target = "x_t",
-                            lib=[1, 100], pred=[101, 195], E=3, Tp=1, knn=0, tau=-1 )
+                             lib=[1, 100], pred=[101, 195], E=3,
+                             Tp=1, knn=0, tau=-1)
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_E3_block_3sp_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:95], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:95], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:95], 6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     def test_Simplex_7( self ):
@@ -141,27 +142,28 @@ class test_sciedm( unittest.TestCase ):
         if self.verbose : print ( "--- Simplex 7 embedded = True ---" )
         df_ = self.block3sp
         spx = sciedm.Simplex(columns = ["x_t", "y_t", "z_t"], target = "x_t",
-                            lib=[1, 99], pred=[100, 198], E=3, Tp=1, embedded = True )
+                             lib=[1, 99], pred=[100, 198], E=3, Tp=1,
+                             embedded = True)
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_E3_embd_block_3sp_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:98], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:98], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:98], 6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     def test_Simplex_8( self ):
         '''negative Tp'''
         if self.verbose : print ( "--- Simplex 8 negative Tp ---" )
         df_ = self.block3sp
-        spx = sciedm.Simplex( columns = "x_t", target = "y_t",
-                             lib=[1, 100], pred=[50, 80], E=3, Tp=-2 )
+        spx = sciedm.Simplex(columns = "x_t", target = "y_t",
+                             lib=[1, 100], pred=[50, 80], E=3, Tp=-2)
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_negTp_block_3sp_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:98], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:98], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:98], 6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -185,14 +187,14 @@ class test_sciedm( unittest.TestCase ):
         if self.verbose : print ( "--- Simplex 10 disjoint lib ---" )
         df_ = self.circle
         spx = sciedm.Simplex(columns = 'x', target = 'x',
-                            lib = [1,40, 50,130], pred = [80,170],
-                            E = 2, Tp = 1, tau = -3 )
+                             lib = [1,40, 50,130], pred = [80,170],
+                             E = 2, Tp = 1, tau = -3)
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_disjointLib_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:195], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:195], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:195],6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -203,14 +205,14 @@ class test_sciedm( unittest.TestCase ):
         df_.iloc[ [8,50,501], [1,2] ] = nan
 
         spx = sciedm.Simplex(columns='V1', target = 'V2',
-                            E = 5, Tp = 2, lib = [1,50,101,200,251,500],
-                            pred = [1,10,151,155,551,555,881,885,991,1000] )
+                             E = 5, Tp = 2, lib = [1,50,101,200,251,500],
+                             pred = [1,10,151,155,551,555,881,885,991,1000])
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_disjointPred_nan_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:195], 5 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:195], 5 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:195],5 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -219,14 +221,14 @@ class test_sciedm( unittest.TestCase ):
         if self.verbose : print ( "--- Simplex 12 exclusion radius ---" )
         df_ = self.circle
         spx = sciedm.Simplex(columns = 'x', target = 'y',
-                            lib = [1,100], pred = [21,81], E = 2, Tp = 1,
-                            exclusionRadius = 5 )
+                             lib = [1,100], pred = [21,81], E = 2, Tp = 1,
+                             exclusionRadius = 5)
         spx.fit(df_)
         pred = spx.predict(df_)
         dfv = self.ValidFiles["Smplx_exclRadius_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:60], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:60], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:60],6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -239,14 +241,14 @@ class test_sciedm( unittest.TestCase ):
         dfn.iloc[ [10,11,17], 2 ] = nan
 
         spx = sciedm.Simplex(columns = 'x', target = 'y',
-                            lib = [1,100], pred = [1,95], E = 2, Tp = 1 )
+                             lib = [1,100], pred = [1,95], E = 2, Tp = 1 )
         spx.fit(dfn)
         pred = spx.predict(dfn)
         rho = spx.score(dfn, dfn['y'])
         dfv = self.ValidFiles["Smplx_nan_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:90], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:90], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:90], 6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -259,14 +261,14 @@ class test_sciedm( unittest.TestCase ):
         dfn.iloc[ [10,11,17], 2 ] = nan
 
         spx = sciedm.Simplex(columns = 'y', target = 'x',
-                            lib = [1,200], pred = [1,195], E = 2, Tp = 1 )
+                             lib = [1,200], pred = [1,195], E = 2, Tp = 1)
         spx.fit(dfn)
         pred = spx.predict(df_)
         rho = spx.score(dfn, dfn['x'])
         dfv = self.ValidFiles["Smplx_nan2_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:190], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:190], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:190],6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -276,7 +278,7 @@ class test_sciedm( unittest.TestCase ):
         df_ = self.SumFlow
 
         spx = sciedm.Simplex(columns = 'SumFlow', target = 'SumFlow',
-                            lib = [1,800], pred = [801,1001], E = 3, Tp = 1 )
+                             lib = [1,800], pred = [801,1001], E = 3, Tp = 1)
         spx.fit(df_)
         pred = spx.predict(df_)
         # self.assertTrue( isinstance( df_['Time'][0], datetime ) )
@@ -284,7 +286,7 @@ class test_sciedm( unittest.TestCase ):
         dfv = self.ValidFiles["Smplx_DateTime_valid.csv"]
 
         S1 = round( dfv.get('Predictions')[1:200], 6 ) # Skip row 0 Nan
-        S2 = round( spx.Projection_.get('Predictions')[1:200], 6 ) # Skip row 0 Nan
+        S2 = round( spx.Projection_.get('Predictions')[1:200],6 )# Skip row 0 Nan
         self.assertTrue( S1.equals( S2 ) )
 
     #------------------------------------------------------------
@@ -294,8 +296,8 @@ class test_sciedm( unittest.TestCase ):
         df_ = self.Lorenz5D
 
         spx = sciedm.Simplex(columns='V5', target = 'V5',
-                            lib = [301,400], pred = [350,355],
-                            knn = 1, embedded = True)
+                             lib = [301,400], pred = [350,355],
+                             knn = 1, embedded = True)
         spx.fit(df_)
         pred = spx.predict(df_)
 
@@ -312,8 +314,8 @@ class test_sciedm( unittest.TestCase ):
         df_ = DataFrame({'Time':df_['Time'],'X':x,'V1':df_['V1']})
 
         spx = sciedm.Simplex(columns='X', target = 'V1',
-                            lib = [1,100], pred = [101,110],
-                            E = 5, exclusionRadius = 10)
+                             lib = [1,100], pred = [101,110],
+                             E = 5, exclusionRadius = 10)
         spx.fit(df_)
         pred = spx.predict(df_)
 
@@ -328,9 +330,9 @@ class test_sciedm( unittest.TestCase ):
         '''SMap'''
         if self.verbose : print ( "--- SMap 1 ---" )
         df_ = self.circle
-        S = sciedm.SMap( columns = 'x', target = 'x',
-                      lib = [1,100], pred = [110,160], E = 4, Tp = 1,
-                      tau = -1, theta = 3. )
+        S = sciedm.SMap(columns = 'x', target = 'x',
+                        lib = [1,100], pred = [110,160], E = 4, Tp = 1,
+                        tau = -1, theta = 3.)
         S.fit(df_)
         pred = S.predict(df_)
         dfv = self.ValidFiles["SMap_circle_E4_valid.csv"]
@@ -344,9 +346,9 @@ class test_sciedm( unittest.TestCase ):
         '''SMap embedded = True'''
         if self.verbose : print ( "--- SMap 2 embedded = True ---" )
         df_ = self.circle
-        S = sciedm.SMap( columns = ['x', 'y'], target = 'x',
-                      lib = [1,200], pred = [1,200], E = 2, Tp = 1,
-                      tau = -1, embedded = True, theta = 3. )
+        S = sciedm.SMap(columns = ['x', 'y'], target = 'x',
+                        lib = [1,200], pred = [1,200], E = 2, Tp = 1,
+                        tau = -1, embedded = True, theta = 3.)
 
         S.fit(df_)
         pred = S.predict(df_)
@@ -371,9 +373,9 @@ class test_sciedm( unittest.TestCase ):
         dfn.iloc[ [5,6,12], 1 ] = nan
         dfn.iloc[ [10,11,17], 2 ] = nan
 
-        S = sciedm.SMap( columns = 'x', target = 'y',
+        S = sciedm.SMap(columns = 'x', target = 'y',
                         lib = [1,50], pred = [1,50], E = 2, Tp = 1,
-                        tau = -1, theta = 3. )
+                        tau = -1, theta = 3.)
 
         S.fit(dfn)
         pred = S.predict(dfn)
@@ -391,9 +393,9 @@ class test_sciedm( unittest.TestCase ):
         if self.verbose : print ( "--- SMap 4 noTime ---" )
         df_ = self.circle_noTime
 
-        S = sciedm.SMap( columns = 'x', target = 'y',
+        S = sciedm.SMap(columns = 'x', target = 'y',
                         lib = [1,100], pred = [101,150], E = 2,
-                        theta = 3, noTime = True )
+                        theta = 3, noTime = True)
 
         S.fit(df_)
         pred = S.predict(df_)
@@ -408,57 +410,45 @@ class test_sciedm( unittest.TestCase ):
     # CCM
     #------------------------------------------------------------
     def test_CCM_1( self ):
-        with catch_warnings():
-            # Python-3.13 multiprocessing fork DeprecationWarning 
-            filterwarnings( "ignore", category = DeprecationWarning )
-
-            if self.verbose : print ( "--- CCM 1 ---" )
-            df_ = self.sardine_anchovy_sst
-            c = sciedm.CCM( columns = 'anchovy',target = 'np_sst',
-                           libSizes = [10,20,30,40,50,60,70,75], sample = 100,
-                           E = 3, Tp = 0, tau = -1, random_state = 777 )
-            ccm = c.fit_transform(df_)
+        if self.verbose : print ( "--- CCM 1 ---" )
+        df_ = self.sardine_anchovy_sst
+        c = sciedm.CCM(columns = 'anchovy',target = 'np_sst',
+                       libSizes = [10,20,30,40,50,60,70,75], sample = 100,
+                       E = 3, Tp = 0, tau = -1, random_state = 777)
+        ccm = c.fit_transform(df_)
 
         dfv = round( self.ValidFiles["CCM_anch_sst_valid.csv"], 2 )
 
         self.assertTrue( dfv.equals( round( c.libMeans_, 2 ) ) )
 
     #------------------------------------------------------------
-    # def test_CCM_2( self ):
-    #     '''CCM Multivariate'''
-    #     with catch_warnings():
-    #         # Python-3.13 multiprocessing fork DeprecationWarning 
-    #         filterwarnings( "ignore", category = DeprecationWarning )
+    def test_CCM_2( self ):
+        '''CCM Multivariate'''
+        if self.verbose : print ( "--- CCM 2 multivariate ---" )
+        df_ = self.Lorenz5D
+        c = sciedm.CCM(columns = ['V3','V5'], target = 'V1',
+                       libSizes = [20, 200, 500, 950], sample = 30, E = 5,
+                       Tp = 10, tau = -5, random_state = 777)
+        ccm = c.fit_transform(df_)
 
-    #         if self.verbose : print ( "--- CCM 2 multivariate ---" )
-    #         df_ = self.Lorenz5D
-    #         c = sciedm.CCM( columns = ['V3','V5'], target = 'V1',
-    #                        libSizes = [20, 200, 500, 950], sample = 30, E = 5,
-    #                        Tp = 10, tau = -5, random_state = 777 )
-    #         ccm = c.fit_transform(df_)
+        dfv = round( self.ValidFiles["CCM_Lorenz5D_MV_valid.csv"], 4 )
 
-    #     dfv = round( self.ValidFiles["CCM_Lorenz5D_MV_valid.csv"], 4 )
-
-    #     self.assertTrue( dfv.equals( round( c.libMeans_, 4 ) ) )
+        self.assertTrue( dfv.equals( round( c.libMeans_, 4 ) ) )
 
     #------------------------------------------------------------
     def test_CCM_3( self ):
         '''CCM nan'''
-        with catch_warnings():
-            # Python-3.13 multiprocessing fork DeprecationWarning 
-            filterwarnings( "ignore", category = DeprecationWarning )
+        if self.verbose : print ( "--- CCM 3 nan ---" )
+        df_ = self.circle
+        dfn = df_.copy()
+        dfn.iloc[ [5,6,12], 1 ] = nan
+        dfn.iloc[ [10,11,17], 2 ] = nan
 
-            if self.verbose : print ( "--- CCM 3 nan ---" )
-            df_ = self.circle
-            dfn = df_.copy()
-            dfn.iloc[ [5,6,12], 1 ] = nan
-            dfn.iloc[ [10,11,17], 2 ] = nan
-
-            libSizes = [_ for _ in range(10,191,10)]
-            c = sciedm.CCM( columns = 'x', target = 'y',
-                           libSizes = libSizes, sample = 20, E = 2,
-                           Tp = 5, tau = -1, random_state = 777 )
-            ccm = c.fit_transform(dfn)
+        libSizes = [_ for _ in range(10,191,10)]
+        c = sciedm.CCM(columns = 'x', target = 'y',
+                       libSizes = libSizes, sample = 20, E = 2,
+                       Tp = 5, tau = -1, random_state = 777)
+        ccm = c.fit_transform(dfn)
 
         dfv = round( self.ValidFiles["CCM_nan_valid.csv"], 4 )
 
@@ -468,16 +458,14 @@ class test_sciedm( unittest.TestCase ):
     # EmbedDimension
     #------------------------------------------------------------
     def test_EmbedDimension( self ):
-        with catch_warnings():
-            # Python-3.13 multiprocessing fork DeprecationWarning 
-            filterwarnings( "ignore", category = DeprecationWarning )
-
-            if self.verbose : print ( "--- EmbedDimension ---" )
-            df_ = self.Lorenz5D
+        if self.verbose : print ( "--- EmbedDimension ---" )
+        df_ = self.Lorenz5D
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             e = sciedm.EmbedDimension(columns='V1', target='V1',
-                                     maxE = 12, lib = [1, 500], pred=[501, 800],
-                                     Tp = 15, tau = -5, exclusionRadius = 20,
-                                     n_jobs = 10)
+                                      maxE = 12, lib = [1, 500], pred=[501, 800],
+                                      Tp = 15, tau = -5, exclusionRadius = 20,
+                                      n_jobs = 10, mpMethod='forkserver')
             edim = e.fit_transform(df_)
 
         dfv = round( self.ValidFiles["EmbedDim_valid.csv"], 6 )
@@ -488,17 +476,16 @@ class test_sciedm( unittest.TestCase ):
     # PredictNonlinear
     #------------------------------------------------------------
     def test_PredictNonlinear( self ):
-        with catch_warnings():
-            # Python-3.13 multiprocessing fork DeprecationWarning 
-            filterwarnings( "ignore", category = DeprecationWarning )
-
-            if self.verbose : print ( "--- Predict ---" )
-            df_ = self.TentMapNoise
-            p = sciedm.PredictNonlinear( columns = 'TentMap', target = 'TentMap',
+        if self.verbose : print ( "--- Predict ---" )
+        df_ = self.TentMapNoise
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            p = sciedm.PredictNonlinear(columns = 'TentMap', target = 'TentMap',
                                         lib = [1, 500], pred = [501,800], E = 4,
                                         Tp = 1, tau = -1, n_jobs = 10,
                                         theta = [0.01,0.1,0.3,0.5,0.75,1,1.5,
-                                                 2,3,4,5,6,7,8,9,10,15,20] )
+                                                 2,3,4,5,6,7,8,9,10,15,20],
+                                        mpMethod='forkserver')
             pnl = p.fit_transform(df_)
 
         dfv = round( self.ValidFiles["PredictNonlinear_valid.csv"], 6 )
