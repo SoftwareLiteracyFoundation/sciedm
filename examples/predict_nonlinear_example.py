@@ -9,8 +9,9 @@ Parameter `theta` is the spatial scale factor of an exponential kernel in the st
 """
 from pandas import read_csv
 from sciedm import PredictNonlinear
+from sciedm.datasets import load_dataset
 
-df = read_csv("../sciedm/data/S12CD-S333-SumFlow_1980-2005.csv")
+df = load_dataset("SumFlow")
 pnl = PredictNonlinear(columns='SumFlow', target='SumFlow', E=4, Tp=3)
 pnl.fit_transform(df)
 

@@ -6,6 +6,7 @@ from .embed_dimension import EmbedDimension
 from .predict_nonlinear import PredictNonlinear
 from ._version import __version__
 
+from . import datasets
 
 __all__ = [
     "CCM",

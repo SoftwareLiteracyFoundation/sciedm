@@ -13,10 +13,12 @@ from pandas import read_csv
 from matplotlib import pyplot as plt
 
 from sciedm import SMap
+from sciedm.datasets import load_dataset
 
-df = read_csv("../sciedm/data/Lorenz5D.csv")
+df = load_dataset("Lorenz5D")
 
-# library (training) and prediction (test) sets: unit-offset row number [start,stop]
+# library (training) and prediction (test) sets:
+# unit-offset row number [start,stop]
 lib, pred = [1,500], [801,900]
 
 # Out of sample prediction V3 from time delay embedding of V3

@@ -15,10 +15,12 @@ from pandas import read_csv
 from matplotlib import pyplot as plt
 
 from sciedm import Simplex
+from sciedm.datasets import load_dataset
 
-df = read_csv("../sciedm/data/Lorenz5D.csv")
+df = load_dataset("Lorenz5D")
 
-# library (training) and prediction (test) sets: unit-offset row number [start,stop]
+# library (training) and prediction (test) sets:
+# unit-offset row number [start,stop]
 lib, pred = [1,500], [801,900]
 
 # Out of sample prediction V3 from time delay embedding of V3
@@ -38,7 +40,8 @@ smp3.fit(df)
 rho3 = smp3.score(df, df['V3'])
 
 # Out of sample prediction of V3 from mixed-multivariate embedding of V1,V2,V4,V5
-smp4 = Simplex(columns=['V1','V2','V4','V5'], target='V3', E=2, lib=lib, pred=pred)
+smp4 = Simplex(columns=['V1','V2','V4','V5'], target='V3', E=2,
+               lib=lib, pred=pred)
 smp4.fit(df)
 rho4 = smp4.score(df, df['V3'])
 

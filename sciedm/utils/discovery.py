@@ -1,11 +1,7 @@
 """
-The :mod:`skedm.utils.discovery` module includes utilities to discover
-objects (i.e. estimators, displays, functions) from the `skedm` package.
+The :mod:`sciedm.utils.discovery` module includes utilities to discover
+objects (i.e. estimators, displays, functions) from the `sciedm` package.
 """
-
-# Adapted from scikit-learn
-# Authors: scikit-learn-contrib developers
-# License: BSD 3 clause
 
 import inspect
 import pkgutil
@@ -26,7 +22,7 @@ _MODULE_TO_IGNORE = {"tests"}
 
 
 def all_estimators(type_filter=None):
-    """Get a list of all estimators from `skedm`.
+    """Get a list of all estimators from `sciedm`.
 
     This function crawls the module and gets all classes that inherit
     from `BaseEstimator`. Classes that are defined in test-modules are not
@@ -50,7 +46,7 @@ def all_estimators(type_filter=None):
 
     Examples
     --------
-    >>> from skedm.utils.discovery import all_estimators
+    >>> from sciedm.utils.discovery import all_estimators
     >>> estimators = all_estimators()
     >>> type(estimators)
     <class 'list'>
@@ -64,15 +60,16 @@ def all_estimators(type_filter=None):
         return True
 
     all_classes = []
-    root = str(Path(__file__).parent.parent)  # skedm package
+    root = str(Path(__file__).parent.parent)  # sciedm package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):
         # JP lint black warning instructs to break PEP8
         # for _, module_name, _ in pkgutil.walk_packages(
-        #    path=[root], prefix="skedm."
+        #    path=[root], prefix="sciedm."
         # ):
-        for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="skedm."):
+        for _, module_name, _ in pkgutil.walk_packages(path=[root],
+                                                       prefix="sciedm."):
             module_parts = module_name.split(".")
             if any(part in _MODULE_TO_IGNORE for part in module_parts):
                 continue
@@ -128,7 +125,7 @@ def all_estimators(type_filter=None):
 
 
 def all_displays():
-    """Get a list of all displays from `skedm`.
+    """Get a list of all displays from `sciedm`.
 
     Returns
     -------
@@ -138,19 +135,20 @@ def all_displays():
 
     Examples
     --------
-    >>> from skedm.utils.discovery import all_displays
+    >>> from sciedm.utils.discovery import all_displays
     >>> displays = all_displays()
     """
     all_classes = []
-    root = str(Path(__file__).parent.parent)  # skedm package
+    root = str(Path(__file__).parent.parent)  # sciedm package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):
         # JP lint black warning instructs to break PEP8
         # for _, module_name, _ in pkgutil.walk_packages(
-        #    path=[root], prefix="skedm."
+        #    path=[root], prefix="sciedm."
         # ):
-        for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="skedm."):
+        for _, module_name, _ in pkgutil.walk_packages(path=[root],
+                                                       prefix="sciedm."):
             module_parts = module_name.split(".")
             if any(part in _MODULE_TO_IGNORE for part in module_parts):
                 continue
@@ -174,14 +172,14 @@ def _is_checked_function(item):
         return False
 
     mod = item.__module__
-    if not mod.startswith("skedm.") or mod.endswith("estimator_checks"):
+    if not mod.startswith("sciedm.") or mod.endswith("estimator_checks"):
         return False
 
     return True
 
 
 def all_functions():
-    """Get a list of all functions from `skedm`.
+    """Get a list of all functions from `sciedm`.
 
     Returns
     -------
@@ -191,19 +189,20 @@ def all_functions():
 
     Examples
     --------
-    >>> from skedm.utils.discovery import all_functions
+    >>> from sciedm.utils.discovery import all_functions
     >>> functions = all_functions()
     """
     all_functions = []
-    root = str(Path(__file__).parent.parent)  # skedm package
+    root = str(Path(__file__).parent.parent)  # sciedm package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):
         # JP lint black warning instructs to break PEP8
         # for _, module_name, _ in pkgutil.walk_packages(
-        #    path=[root], prefix="skedm."
+        #    path=[root], prefix="sciedm."
         # ):
-        for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="skedm."):
+        for _, module_name, _ in pkgutil.walk_packages(path=[root],
+                                                       prefix="sciedm."):
             module_parts = module_name.split(".")
             if any(part in _MODULE_TO_IGNORE for part in module_parts):
                 continue

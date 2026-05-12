@@ -1,0 +1,1 @@
+recursive-include sciedm/datasets/data *.csv.gz

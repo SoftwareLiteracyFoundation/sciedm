@@ -9,8 +9,9 @@ Compute convergent cross mapping (CCM) between two components of Lorenz'96 5-D s
 """
 from pandas import read_csv
 from sciedm import CCM
+from sciedm.datasets import load_dataset
 
-df = read_csv("../sciedm/data/Lorenz5D.csv")
+df = load_dataset("Lorenz5D")
 ccm1 = CCM(columns='V1', target='V5', E=7, libSizes=[25,50,100,200,800,900,950])
 ccm1.fit_transform(X=df)
 

@@ -9,8 +9,9 @@ The estimate of `E` corresponds to the first peak in predictability (`rho`) or t
 """
 from pandas import read_csv
 from sciedm import EmbedDimension
+from sciedm.datasets import load_dataset
 
-df = read_csv("../sciedm/data/S12CD-S333-SumFlow_1980-2005.csv")
+df = load_dataset("SumFlow")
 
 edim = EmbedDimension(columns='SumFlow', target='SumFlow', exclusionRadius=3)
 E_rho = edim.fit_transform(df)

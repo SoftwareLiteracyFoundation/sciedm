@@ -88,8 +88,8 @@ class PredictNonlinear(TransformerMixin, BaseEstimator):
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-    E_rho_ : DataFrame
-        DataFrame of embedding dimension and maximal simplex predictive correlation
+    theta_rho_ : DataFrame
+        DataFrame of SMap rho(theta)
 
 
     Returns
@@ -162,7 +162,7 @@ class PredictNonlinear(TransformerMixin, BaseEstimator):
     def get_feature_names_out(self, input_features=None):
         """set_output for downstream pipeline compatibility
 
-        The 'output' is a DataFrame with [E. rho]"""
+        The 'output' is a DataFrame with [theta, rho]"""
         check_is_fitted(self)
         return array(["theta", "rho"], dtype=object)
 
@@ -290,7 +290,8 @@ class PredictNonlinear(TransformerMixin, BaseEstimator):
         _ = S.fit(data)
         p = S.predict(data)
 
-        err = ComputeError(S.Projection_["Observations"], S.Projection_["Predictions"])
+        err = ComputeError(S.Projection_["Observations"],
+                           S.Projection_["Predictions"])
         return err["rho"]
 
     # -------------------------------------------------------------------

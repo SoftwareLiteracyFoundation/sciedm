@@ -92,15 +92,6 @@ class CCM_Matrix(TransformerMixin, BaseEstimator):
     progressInterval : int
         Percentage increment for progress log lines. Default 5.
 
-    Attributes (after Run)
-    --------------------------
-    tensor_ : ndarray (M, M, L), float16
-    slope_ : ndarray (M, M), float16
-    exp_a_ : ndarray (M, M), float32 or None
-    columns_ : list of str
-    lib_sizes_arr_ : ndarray of int
-    lib_sizes_norm_ : ndarray of float
-
     The slope of CCM rho(libSizes) is computed based on a [0,1]
     normalization of libSizes.
 
@@ -120,10 +111,28 @@ class CCM_Matrix(TransformerMixin, BaseEstimator):
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
+    tensor_ : ndarray, float16
+        (M, M, L) array of MxM CCM matrices at the L libSizes
+    
+    slope_ : ndarray, float32
+        (M, M) array of CCM rho ~ LibSizes 
+    
+    exp_a_ : ndarray, float32
+        (M, M) array of exponential fit coefficient or None
+    
+    columns_ : [str]
+        List of columns/rows of the CCM and slope matrices
+    
+    lib_sizes_arr_ : ndarray
+        Integer libSizes
+    
+    lib_sizes_norm_ : ndarray
+        Normalized [0,1] libSizes for slope regression
+    
 
     Returns
     -------
-    tuple (MxMxL tensor, columns)
+    tuple (MxMxL tensor, columns, libSizes)
 
 
     Examples
@@ -265,8 +274,7 @@ class CCM_Matrix(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        DataFrame
-            tuple: MxMxL tensor, columns
+        tuple: MxMxL tensor, columns, libSizes
         """
         # Check if fit has been called
         check_is_fitted(self)
@@ -280,7 +288,7 @@ class CCM_Matrix(TransformerMixin, BaseEstimator):
 
         self.Run()
 
-        return self.tensor_, self.columns_
+        return self.tensor_, self.columns_, self.libSizes
 
 
     # ================================================================

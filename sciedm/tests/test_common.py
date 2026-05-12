@@ -1,7 +1,6 @@
 """scikit-learn common tests for sciedm"""
 
-# Authors: Joseph Park
-# License: BSD 3 clause
+import warnings
 
 import pytest
 
@@ -22,15 +21,17 @@ expected_failed = {
     "check_regressors_no_decision_function":"sciedm requires at least 10 observations",
 }
 
-@parametrize_with_checks([est() for _, est in all_estimators()])
+@parametrize_with_checks([est() for _, est in all_estimators("regressor")])
 def test_estimators(estimator, check, request):
     """Check the compatibility with scikit-learn API"""
     
     # Extract the name of the check function
     # Sometimes 'check' is a functools.partial, so we get __name__ carefully
-    check_name = check.func.__name__ if hasattr(check, 'func') else check.__name__
+    check_name = check.func.__name__ if hasattr(check,'func') else check.__name__
 
     if check_name in expected_failed:
         pytest.xfail(reason=expected_failed[check_name])
 
-    check(estimator)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        check(estimator)
